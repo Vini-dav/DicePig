@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Свинка">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>Свинка</title>
+<style>
+:root {
+  --bg: #f0f4ff;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --blue: #2563eb;
+  --blue-bg: #eff6ff;
+  --blue-light: #bfdbfe;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-light: #bbf7d0;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-light: #fecaca;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--text); min-height: 100vh; }
+.screen { display: none; padding: 16px; max-width: 500px; margin: 0 auto; }
+.screen.active { display: block; }
+
+/* ── Setup ── */
+.logo { text-align: center; padding: 32px 0 8px; }
+.logo-die { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; background: var(--blue); border-radius: 20px; box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+.logo h1 { font-size: 28px; font-weight: 700; margin-top: 12px; letter-spacing: -0.5px; }
+.logo p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+.section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
+.count-row { display: flex; gap: 10px; }
+.cnt-btn { flex: 1; padding: 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text); font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.cnt-btn.sel { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); }
+.name-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.player-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.dot-0 { background: #2563eb; }
+.dot-1 { background: #9333ea; }
+.dot-2 { background: #ea580c; }
+.dot-3 { background: #16a34a; }
+input[type=text] { flex: 1; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; background: var(--card); color: var(--text); outline: none; }
+input[type=text]:focus { border-color: var(--blue); }
+.start-btn { width: 100%; padding: 16px; margin-top: 20px; border: none; border-radius: var(--radius); background: var(--blue); color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.4); letter-spacing: 0.2px; }
+.start-btn:active { transform: scale(0.98); }
+
+/* ── Game ── */
+.final-banner { background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border-radius: var(--radius-sm); padding: 10px 16px; text-align: center; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.scoreboard { display: flex; gap: 8px; margin-bottom: 12px; }
+.p-card { flex: 1; background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); padding: 10px 8px; text-align: center; position: relative; min-width: 0; transition: border-color 0.2s; }
+.p-card.active { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
+.p-card.leader { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-light); }
+.p-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+.badge-active { background: var(--blue); color: #fff; }
+.badge-leader { background: var(--green); color: #fff; }
+.p-name { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.p-score { font-size: 28px; font-weight: 800; line-height: 1.1; }
+.p-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.p-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; background: var(--blue); }
+.p-card.leader .p-bar-fill { background: var(--green); }
+
+.turn-header { background: var(--card); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); }
+.turn-player-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.turn-player-name { font-size: 18px; font-weight: 700; }
+.turn-temp-label { font-size: 12px; color: var(--muted); text-align: right; margin-bottom: 2px; }
+.turn-temp-value { font-size: 24px; font-weight: 800; text-align: right; color: var(--blue); }
+
+.dice-area { text-align: center; padding: 16px 0 8px; }
+.die-wrap { display: inline-block; }
+.die-wrap.rolling { animation: diceRoll 0.45s ease; }
+@keyframes diceRoll {
+  0%   { transform: scale(1) rotate(0deg); }
+  20%  { transform: scale(0.78) rotate(-22deg); }
+  60%  { transform: scale(1.16) rotate(14deg); }
+  85%  { transform: scale(0.94) rotate(-6deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.msg-area { min-height: 22px; text-align: center; font-size: 14px; color: var(--muted); margin: 8px 0 14px; padding: 0 8px; }
+.msg-area.pig { color: var(--red); font-weight: 600; }
+
+.btn-row { display: flex; gap: 10px; }
+.game-btn { flex: 1; padding: 16px 10px; border: 2px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.game-btn:active:not(:disabled) { transform: scale(0.97); }
+.game-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.game-btn.roll { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+.game-btn.hold { background: var(--card); border-color: var(--border); }
+.game-btn.next { background: var(--green); border-color: var(--green); color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,0.3); }
+
+/* ── End screen ── */
+.end-title { text-align: center; font-size: 28px; font-weight: 800; margin: 32px 0 4px; }
+.end-sub { text-align: center; font-size: 16px; color: var(--muted); margin-bottom: 24px; }
+.result-item { display: flex; align-items: center; gap: 14px; background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; box-shadow: var(--shadow); }
+.result-item.winner { border-color: var(--green); background: var(--green-bg); }
+.result-rank { font-size: 22px; font-weight: 800; min-width: 32px; color: var(--muted); }
+.result-item.winner .result-rank { color: var(--green); }
+.result-name { flex: 1; font-size: 17px; font-weight: 600; }
+.result-score { font-size: 22px; font-weight: 800; }
+.replay-btn { width: 100%; padding: 16px; margin-top: 16px; border: none; border-radius: var(--radius); background: var(--blue); color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.4); }
+.replay-btn:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup" class="screen active">
+  <div class="logo">
+    <div class="logo-die">
+      <svg width="44" height="44" viewBox="0 0 80 80"><rect x="4" y="4" width="72" height="72" rx="14" fill="white" opacity="0.9"/>
+      <circle cx="24" cy="24" r="8" fill="#2563eb"/><circle cx="56" cy="56" r="8" fill="#2563eb"/><circle cx="56" cy="24" r="8" fill="#2563eb"/><circle cx="24" cy="56" r="8" fill="#2563eb"/><circle cx="40" cy="40" r="8" fill="#2563eb"/></svg>
+    </div>
+    <h1>Свинка</h1>
+    <p>Кто первый наберёт 100 очков — победил!</p>
+  </div>
+  <div class="section-title">Количество игроков</div>
+  <div class="count-row" id="cntRow">
+    <button class="cnt-btn sel" onclick="setCount(2)">2</button>
+    <button class="cnt-btn" onclick="setCount(3)">3</button>
+    <button class="cnt-btn" onclick="setCount(4)">4</button>
+  </div>
+  <div class="section-title">Имена игроков</div>
+  <div id="nameInputs"></div>
+  <button class="start-btn" onclick="startGame()">▶  Начать игру</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div id="finalBanner" style="display:none" class="final-banner">⚑ Финальный раунд — последний ход!</div>
+  <div id="scoreboard" class="scoreboard"></div>
+  <div class="turn-header">
+    <div>
+      <div class="turn-player-label">Ход игрока</div>
+      <div class="turn-player-name" id="curName">—</div>
+    </div>
+    <div>
+      <div class="turn-temp-label">Очки в ходе</div>
+      <div class="turn-temp-value" id="tempVal">0</div>
+    </div>
+  </div>
+  <div class="dice-area"><div class="die-wrap" id="dieWrap"></div></div>
+  <div class="msg-area" id="msgEl"></div>
+  <div class="btn-row">
+    <button class="game-btn roll" id="btnRoll" onclick="rollDice()">🎲 Бросить</button>
+    <button class="game-btn hold" id="btnHold" onclick="holdTurn()" disabled>✋ Взять</button>
+    <button class="game-btn next" id="btnNext" style="display:none" onclick="nextTurn()">→ Дальше</button>
+  </div>
+</div>
+
+<!-- END -->
+<div id="end" class="screen">
+  <div class="end-title">Игра окончена!</div>
+  <div class="end-sub" id="endSub"></div>
+  <div id="resultList"></div>
+  <button class="replay-btn" onclick="resetGame()">↺  Играть снова</button>
+</div>
+
+<script>
+var pCount = 2;
+var G = {};
+var COLORS = ['#2563eb','#9333ea','#ea580c','#16a34a'];
+
+function setCount(n) {
+  pCount = n;
+  var btns = document.querySelectorAll('#cntRow .cnt-btn');
+  btns.forEach(function(b, i) { b.className = 'cnt-btn' + (i === n-2 ? ' sel' : ''); });
+  buildNameInputs(n);
+}
+
+function buildNameInputs(n) {
+  var el = document.getElementById('nameInputs');
+  var html = '';
+  for (var i = 0; i < n; i++) {
+    html += '<div class="name-input-row"><div class="player-dot dot-' + i + '">' + (i+1) + '</div>' +
+      '<input type="text" id="pname' + i + '" value="Игрок ' + (i+1) + '" placeholder="Игрок ' + (i+1) + '"></div>';
+  }
+  el.innerHTML = html;
+}
+
+function startGame() {
+  var names = [];
+  for (var i = 0; i < pCount; i++) {
+    var el = document.getElementById('pname' + i);
+    names.push(el ? (el.value.trim() || 'Игрок ' + (i+1)) : 'Игрок ' + (i+1));
+  }
+  G = { players: names.map(function(n) { return { name: n, score: 0 }; }),
+    idx: 0, temp: 0, lastRoll: null, rolling: false,
+    phase: 'playing', leaderIdx: -1, finalQueue: [], waitNext: false, msg: '' };
+  showScreen('game');
+  render();
+}
+
+function dieSVG(n) {
+  var pips = {1:[[40,40]],2:[[22,22],[58,58]],3:[[22,22],[40,40],[58,58]],
+    4:[[22,22],[58,22],[22,58],[58,58]],5:[[22,22],[58,22],[40,40],[22,58],[58,58]],
+    6:[[22,22],[58,22],[22,40],[58,40],[22,58],[58,58]]};
+  var pig = n === 1;
+  var bg = pig ? '#fef2f2' : '#ffffff';
+  var stroke = pig ? '#dc2626' : '#e2e8f0';
+  var pipColor = pig ? '#dc2626' : '#1e293b';
+  var dots = pips[n].map(function(p) {
+    return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="8" fill="' + pipColor + '"/>';
+  }).join('');
+  return '<svg width="100" height="100" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="3" y="3" width="74" height="74" rx="16" fill="' + bg + '" stroke="' + stroke + '" stroke-width="2"/>' +
+    dots + '</svg>';
+}
+
+function dieBlank() {
+  return '<svg width="100" height="100" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="3" y="3" width="74" height="74" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>' +
+    '<text x="40" y="50" text-anchor="middle" font-size="32" fill="#94a3b8" font-family="sans-serif">?</text></svg>';
+}
+
+function rollDice() {
+  if (G.rolling || G.waitNext) return;
+  G.rolling = true;
+  var dw = document.getElementById('dieWrap');
+  dw.classList.remove('rolling'); void dw.offsetWidth; dw.classList.add('rolling');
+  setTimeout(function() {
+    var r = Math.floor(Math.random() * 6) + 1;
+    G.lastRoll = r; G.rolling = false;
+    document.getElementById('dieWrap').classList.remove('rolling');
+    if (r === 1) { G.temp = 0; G.waitNext = true; G.msg = 'Выпала 1 — свинья! Очки сгорают.'; }
+    else { G.temp += r; G.msg = 'Выпало ' + r + '. Временные очки: ' + G.temp + '.'; }
+    render();
+  }, 450);
+}
+
+function holdTurn() {
+  if (G.rolling || G.waitNext || G.temp === 0) return;
+  var g = G.temp;
+  G.players[G.idx].score += g;
+  G.msg = G.players[G.idx].name + ' берёт +' + g + ' очков (итого: ' + G.players[G.idx].score + ').';
+  if (G.phase === 'playing' && G.players[G.idx].score >= 100 && G.leaderIdx === -1) G.msg += ' Финальный раунд!';
+  endTurn();
+}
+
+function nextTurn() {
+  if (G.rolling) return;
+  G.waitNext = false; G.msg = ''; endTurn();
+}
+
+function endTurn() {
+  G.temp = 0; G.lastRoll = null; G.waitNext = false;
+  if (G.phase === 'playing') {
+    if (G.players[G.idx].score >= 100 && G.leaderIdx === -1) {
+      G.leaderIdx = G.idx; G.phase = 'final_round';
+      G.finalQueue = [];
+      for (var i = 1; i < G.players.length; i++) G.finalQueue.push((G.idx + i) % G.players.length);
+      if (!G.finalQueue.length) { endGame(); return; }
+      G.idx = G.finalQueue[0];
+    } else { G.idx = (G.idx + 1) % G.players.length; }
+  } else {
+    G.finalQueue.shift();
+    if (!G.finalQueue.length) { endGame(); return; }
+    G.idx = G.finalQueue[0];
+  }
+  render();
+}
+
+function endGame() {
+  var sorted = G.players.map(function(p, i) { return { name: p.name, score: p.score, oi: i }; })
+    .sort(function(a, b) { return b.score - a.score || a.oi - b.oi; });
+  document.getElementById('endSub').textContent = sorted[0].name + ' победил с результатом ' + sorted[0].score + ' очков!';
+  var html = '';
+  sorted.forEach(function(p, i) {
+    html += '<div class="result-item' + (i === 0 ? ' winner' : '') + '">' +
+      '<div class="result-rank">' + (i+1) + '</div>' +
+      '<div class="result-name">' + p.name + '</div>' +
+      '<div class="result-score">' + p.score + '</div></div>';
+  });
+  document.getElementById('resultList').innerHTML = html;
+  showScreen('end');
+}
+
+function resetGame() { showScreen('setup'); buildNameInputs(pCount); }
+
+function showScreen(name) {
+  ['setup','game','end'].forEach(function(id) {
+    document.getElementById(id).className = 'screen' + (id === name ? ' active' : '');
+  });
+}
+
+function render() {
+  document.getElementById('finalBanner').style.display = G.phase === 'final_round' ? '' : 'none';
+  var sbHtml = '';
+  G.players.forEach(function(p, i) {
+    var isC = i === G.idx, isL = i === G.leaderIdx && G.phase === 'final_round';
+    var w = Math.min(100, p.score) + '%';
+    var badge = isC ? '<div class="p-badge badge-active">' + (G.phase === 'final_round' ? 'последний ход' : 'ходит') + '</div>'
+      : isL ? '<div class="p-badge badge-leader">лидер</div>' : '';
+    sbHtml += '<div class="p-card' + (isC ? ' active' : '') + (isL ? ' leader' : '') + '">' +
+      badge + '<div class="p-name">' + p.name + '</div>' +
+      '<div class="p-score">' + p.score + '</div>' +
+      '<div class="p-bar"><div class="p-bar-fill" style="width:' + w + '"></div></div></div>';
+  });
+  document.getElementById('scoreboard').innerHTML = sbHtml;
+  document.getElementById('curName').textContent = G.players[G.idx].name;
+  document.getElementById('tempVal').textContent = G.temp;
+  document.getElementById('dieWrap').innerHTML = G.lastRoll ? dieSVG(G.lastRoll) : dieBlank();
+  var msgEl = document.getElementById('msgEl');
+  msgEl.textContent = G.msg || '';
+  msgEl.className = 'msg-area' + (G.lastRoll === 1 ? ' pig' : '');
+  var br = document.getElementById('btnRoll'), bh = document.getElementById('btnHold'), bn = document.getElementById('btnNext');
+  br.style.display = G.waitNext ? 'none' : '';
+  bh.style.display = G.waitNext ? 'none' : '';
+  bn.style.display = G.waitNext ? '' : 'none';
+  br.disabled = G.rolling;
+  bh.disabled = G.rolling || G.temp === 0;
+}
+
+buildNameInputs(2);
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
+</body>
+</html>
